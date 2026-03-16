@@ -1,0 +1,96 @@
+/* EthiopianCalendarPicker.css */
+
+/* Main container for the calendar */
+.calendar {
+  background-color: white;
+  border-radius: 0.5rem; /* Rounded corners */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Shadow for depth */
+  width: 100%; /* Allow responsive sizing */
+  max-width: 380px; /* Set maximum width to fit better */
+
+  padding: 0.2rem; /* Padding around the content */
+}
+
+/* Header styling */
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background-color: #e0f7fa; /* Light blue background */
+  border-radius: 0.5rem; /* Rounded corners */
+}
+
+/* Button styling */
+.calendar-button {
+  padding: 0.5rem;
+  cursor: pointer;
+  border: none;
+  background: none;
+  transition: background 0.2s;
+}
+
+.calendar-button:hover {
+  background-color: #b2ebf2; /* Darker blue on hover */
+}
+
+/* Day names styling */
+.day-names {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr); /* 7 columns for each day */
+  text-align: center;
+  margin-top: 1rem;
+  border-bottom: 1px solid #e5e7eb; /* Dividing line under day names */
+  padding-bottom: 0.5rem; /* Space below day names */
+}
+
+.day-name {
+  color: #374151; /* Dark gray for the text */
+  font-weight: bold; /* Bold text */
+}
+
+.day-name-small {
+  color: #6b7280; /* Light gray for small text */
+  font-size: 0.75rem; /* Smaller text size */
+}
+
+/* Calendar grid styling */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr); /* 7 columns for days */
+  gap: 0.5rem; /* Space between days */
+}
+
+.calendar-cell {
+  border: 1px solid #e5e7eb; /* Border for each cell */
+  padding: 1rem; /* Padding inside each cell */
+  min-height: 90px; /* Minimum height for day cells */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer; /* Pointer on hover */
+  transition: background-color 0.2s; /* Smooth background change */
+}
+
+.calendar-cell:hover {
+  background-color: #f3f4f6; /* Light gray for hover effect */
+}
+
+/* Today and selected day styling */
+.today {
+  background-color: #ffeb3b; /* Yellow background for today */
+}
+
+.selected {
+  ring: 2px solid #2563eb; /* Blue ring for selected day */
+  background-color: #e0f2fe; /* Light blue background */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .calendar {
+    width: 100%; /* Full width on smaller screens */
+    padding: 0.5rem; /* Reduced padding */
+  }
+}
