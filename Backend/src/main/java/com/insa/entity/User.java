@@ -1,8 +1,8 @@
 package com.insa.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import lombok.*;
+
 import javax.persistence.*;
 
 @Entity
@@ -16,9 +16,10 @@ import javax.persistence.*;
 public class User {
 
     public enum Role {
-        admin,
-        staff,
-        super_admin
+        administrator,   // NEW ROLE (manages focal person accounts and departments)
+        admin,           // focal person
+        staff,           // complaint submitter
+        super_admin      // can view all complaints
     }
 
     @Id

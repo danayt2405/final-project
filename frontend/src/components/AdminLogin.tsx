@@ -9,7 +9,6 @@ import { login } from "../services/api";
 import type { Language, Theme } from "../types";
 import insaLogo from "../assets/logo.png";
 
-
 interface AdminLoginProps {
   language: Language;
   theme: Theme;
@@ -59,11 +58,13 @@ export function AdminLogin({
     setIsLoading(true);
 
     try {
-      // SAME LOGIC AS Reports.tsx & SubmittedComplaints.tsx
-      await login(username, password);
+      const user = await login(username, password);
+
+      console.log("LOGIN RESPONSE USER:", user); // DEBUG
 
       toast.success(t.loginSuccess);
-      onLoginSuccess(); // continues to dashboard
+
+      onLoginSuccess(user); // ✅ PASS USER
     } catch (error) {
       console.error("Login error:", error);
       toast.error(t.loginFailed);

@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { Header } from './Header';
-import { Sidebar } from './Sidebar';
-import { WelcomeScreen } from './WelcomeScreen';
-import SubmittedComplaints from './SubmittedComplaints';
-import Reports from './Reports';
-import { AdminLogin } from './AdminLogin';
-import type { Language, Theme } from '../types';
+import { useState } from "react";
+import { Header } from "./Header";
+import { Sidebar } from "./Sidebar";
+import { WelcomeScreen } from "./WelcomeScreen";
+import SubmittedComplaints from "./SubmittedComplaints";
+import Reports from "./Reports";
+import { AdminLogin } from "./AdminLogin";
+import type { Language, Theme } from "../types";
 
 interface AdminDashboardLayoutProps {
   language: Language;
@@ -31,7 +31,7 @@ export function AdminDashboardLayout({
   isAuthenticated,
   onLogin,
 }: AdminDashboardLayoutProps) {
-  const [currentPage, setCurrentPage] = useState<string>('home');
+  const [currentPage, setCurrentPage] = useState<string>("home");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // If not authenticated, show login screen
@@ -73,24 +73,22 @@ export function AdminDashboardLayout({
       {/* Main Content Area */}
       <main
         className={`transition-all duration-300 ${
-          sidebarOpen ? 'lg:ml-64' : ''
+          sidebarOpen ? "lg:ml-64" : ""
         } pt-16`}
       >
         <div className="p-6">
           {/* Welcome/Home Page */}
-          {currentPage === 'home' && (
+          {currentPage === "home" && (
             <WelcomeScreen language={language} role="ADMIN" />
           )}
 
           {/* Submitted Complaints Page */}
-          {currentPage === 'submitted' && (
+          {currentPage === "submitted" && (
             <SubmittedComplaints language={language} />
           )}
 
           {/* Reports Page */}
-          {currentPage === 'reports' && (
-            <Reports initialLanguage={language} />
-          )}
+          {currentPage === "reports" && <Reports initialLanguage={language} />}
         </div>
       </main>
     </div>

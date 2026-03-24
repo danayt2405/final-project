@@ -1,134 +1,150 @@
-import { createRoot } from "react-dom/client";
-import App from "./App.tsx";
-import "./index.css";
-
-createRoot(document.getElementById("root")!).render(<App />);
 import { useState, useEffect } from "react";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import { Toaster } from "sonner";
+
 import { HomePage } from "./components/HomePage";
 import { UserDashboardLayout } from "./components/UserDashboardLayout";
 import { AdminDashboardLayout } from "./components/AdminDashboardLayout";
+import AdministratorDashboard from "./components/AdministratorDashboard";
+import { AdminLogin } from "./components/AdminLogin";
+
 import { getCurrentUser, logout as apiLogout } from "./services/api";
-import type { Language, Theme, UserRole } from "./types";
+import type { Language, Theme } from "./types";
 
 export default function App() {
-  // Theme and Language state
+  const navigate = useNavigate();
+
   const [theme, setTheme] = useState<Theme>("light");
   const [language, setLanguage] = useState<Language>("en");
 
-  // Dashboard state: 'home' | 'user' | 'admin'
-  const [dashboardView, setDashboardView] = useState<"home" | "user" | "admin">(
-    "home"
-  );
-
-  // Admin authentication state
   const [adminAuthenticated, setAdminAuthenticated] = useState(false);
 
-  // Initialize theme from localStorage
+  // ================= INIT =================
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") as Theme;
-    const savedLanguage = localStorage.getItem("language") as Language;
-
-    if (savedTheme) setTheme(savedTheme);
-    if (savedLanguage) setLanguage(savedLanguage);
-
-    // Check if admin is already logged in
     const user = getCurrentUser();
-    if (user && user.role === "ADMIN") {
-      setAdminAuthenticated(true);
-      setDashboardView("admin");
+
+    if (user) {
+      if (user.role === "administrator") {
+        setAdminAuthenticated(true);
+        navigate("/administrator");
+      } else if (user.role === "admin" || user.role === "superadmin") {
+        setAdminAuthenticated(true);
+        navigate("/admin");
+      }
     }
   }, []);
 
-  // Apply theme to document
+  // ================= THEME =================
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  // Save language preference
+  // ================= LANGUAGE =================
   useEffect(() => {
     localStorage.setItem("language", language);
   }, [language]);
 
-  /**
-   * Handler for entering User Dashboard (no authentication needed)
-   */
-  const handleEnterUserDashboard = () => {
-    setDashboardView("user");
-    setAdminAuthenticated(false);
-  };
-
-  /**
-   * Handler for entering Admin Dashboard (requires authentication)
-   */
-  const handleEnterAdminDashboard = () => {
-    // Check if already authenticated
-    const user = getCurrentUser();
-    if (user && user.role === "ADMIN") {
-      setAdminAuthenticated(true);
-      setDashboardView("admin");
-    } else {
-      // Will show login in AdminDashboardLayout
-      setDashboardView("admin");
-    }
-  };
-
-  /**
-   * Handler for logging out and returning to home
-   */
+  // ================= LOGOUT =================
   const handleLogout = () => {
     apiLogout();
     setAdminAuthenticated(false);
-    setDashboardView("home");
+    navigate("/");
   };
 
-  /**
-   * Handler for successful admin login
-   */
-  const handleAdminLogin = () => {
-    setAdminAuthenticated(true);
+  // ================= LOGIN SUCCESS =================
+  const handleAdminLogin = (user?: any) => {
+    const currentUser = user || getCurrentUser();
+
+    console.log("LOGIN USER:", currentUser);
+
+    if (!currentUser) {
+      alert("Login error");
+      return;
+    }
+
+    if (currentUser.role === "administrator") {
+      setAdminAuthenticated(true);
+      navigate("/administrator");
+    } else if (
+      currentUser.role === "admin" ||
+      currentUser.role === "superadmin"
+    ) {
+      setAdminAuthenticated(true);
+      navigate("/admin");
+    } else {
+      alert("Access denied: Unknown role");
+    }
   };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Toaster position="top-right" richColors />
 
-      {/* HOME PAGE - Initial landing page */}
-      {dashboardView === "home" && (
-        <HomePage
-          language={language}
-          theme={theme}
-          setLanguage={setLanguage}
-          setTheme={setTheme}
-          onEnterUserDashboard={handleEnterUserDashboard}
-          onEnterAdminDashboard={handleEnterAdminDashboard}
+      <Routes>
+        {/* HOME */}
+        <Route
+          path="/"
+          element={
+            <HomePage
+              language={language}
+              theme={theme}
+              setLanguage={setLanguage}
+              setTheme={setTheme}
+              onEnterUserDashboard={() => navigate("/user")}
+              onEnterAdminDashboard={() => navigate("/admin")}
+            />
+          }
         />
-      )}
 
-      {/* USER DASHBOARD - No authentication required */}
-      {dashboardView === "user" && (
-        <UserDashboardLayout
-          language={language}
-          setLanguage={setLanguage}
-          theme={theme}
-          setTheme={setTheme}
-          onBackToHome={handleLogout}
+        {/* USER */}
+        <Route
+          path="/user"
+          element={
+            <UserDashboardLayout
+              language={language}
+              setLanguage={setLanguage}
+              theme={theme}
+              setTheme={setTheme}
+              onBackToHome={() => navigate("/")}
+            />
+          }
         />
-      )}
 
-      {/* ADMIN DASHBOARD - Authentication required */}
-      {dashboardView === "admin" && (
-        <AdminDashboardLayout
-          language={language}
-          setLanguage={setLanguage}
-          theme={theme}
-          setTheme={setTheme}
-          onLogout={handleLogout}
-          isAuthenticated={adminAuthenticated}
-          onLogin={handleAdminLogin}
+        {/* ADMIN (focal person + super admin) */}
+        <Route
+          path="/admin"
+          element={
+            <AdminDashboardLayout
+              language={language}
+              setLanguage={setLanguage}
+              theme={theme}
+              setTheme={setTheme}
+              onLogout={handleLogout}
+              isAuthenticated={adminAuthenticated}
+              onLogin={handleAdminLogin}
+            />
+          }
         />
-      )}
+
+        {/* ADMINISTRATOR */}
+        <Route
+          path="/administrator"
+          element={
+            adminAuthenticated ? (
+              <AdministratorDashboard />
+            ) : (
+              <AdminLogin
+                language={language}
+                theme={theme}
+                setTheme={setTheme}
+                onLoginSuccess={handleAdminLogin}
+                onBack={() => navigate("/")}
+              />
+            )
+          }
+        />
+      </Routes>
     </div>
   );
 }
