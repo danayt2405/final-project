@@ -32,11 +32,15 @@ public class AdministratorController {
     }
 
     // =========================
-    // GET ALL ADMINS
+    // GET ALL ADMINS + SUPER ADMINS
     // =========================
     @GetMapping("/admins")
     public List<User> getAllAdmins() {
-        return userRepository.findByRole(User.Role.admin);
+        return userRepository.findAll()
+                .stream()
+                .filter(u -> u.getRole() == User.Role.admin
+                          || u.getRole() == User.Role.super_admin)
+                .toList();
     }
 
     // =========================
@@ -51,26 +55,57 @@ public class AdministratorController {
             throw new RuntimeException("Department is required");
         }
 
-        // 🔹 Get department
         ComplaintType department = complaintTypeRepository.findById(departmentId)
                 .orElseThrow(() -> new RuntimeException("Department not found"));
 
-        // 🔹 Prepare user
         user.setRole(User.Role.admin);
         user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
         user.setActive(true);
 
-        // 🔹 Save user
         User savedUser = userRepository.save(user);
 
-        // 🔹 Create relation (THIS IS THE KEY PART 🔥)
         UserTypeAccess access = new UserTypeAccess();
         access.setUser(savedUser);
         access.setType(department);
-
         userTypeAccessRepository.save(access);
 
         return savedUser;
+    }
+
+    // =========================
+    // UPDATE ADMIN / SUPER ADMIN
+    // =========================
+    @PutMapping("/admins/{id}")
+    public User updateAdmin(@PathVariable Long id, @RequestBody User updatedUser) {
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.getRole() != User.Role.admin && user.getRole() != User.Role.super_admin) {
+            throw new RuntimeException("Only admin/super_admin can be updated");
+        }
+
+        if (updatedUser.getUsername() != null) {
+            user.setUsername(updatedUser.getUsername());
+        }
+
+        if (updatedUser.getFullName() != null) {
+            user.setFullName(updatedUser.getFullName());
+        }
+
+        if (updatedUser.getEmail() != null) {
+            user.setEmail(updatedUser.getEmail());
+        }
+
+        if (updatedUser.getPhone() != null) {
+            user.setPhone(updatedUser.getPhone());
+        }
+
+        if (updatedUser.getPasswordHash() != null && !updatedUser.getPasswordHash().isEmpty()) {
+            user.setPasswordHash(passwordEncoder.encode(updatedUser.getPasswordHash()));
+        }
+
+        return userRepository.save(user);
     }
 
     // =========================
@@ -90,7 +125,7 @@ public class AdministratorController {
     }
 
     // =========================
-    // GET DEPARTMENTS
+    // GET ALL DEPARTMENTS
     // =========================
     @GetMapping("/departments")
     public List<ComplaintType> getDepartments() {
@@ -98,11 +133,29 @@ public class AdministratorController {
     }
 
     // =========================
-    // ADD DEPARTMENT
+    // ADD DEPARTMENT + AUTO ASSIGN TO SUPER ADMINS ✅
     // =========================
     @PostMapping("/departments")
     public ComplaintType addDepartment(@RequestBody ComplaintType type) {
-        return complaintTypeRepository.save(type);
+
+        // 1. Save department
+        ComplaintType saved = complaintTypeRepository.save(type);
+
+        // 2. Find ALL super admins
+        List<User> superAdmins = userRepository.findAll()
+                .stream()
+                .filter(u -> u.getRole() == User.Role.super_admin)
+                .toList();
+
+        // 3. Assign department to ALL super admins
+        for (User superAdmin : superAdmins) {
+            UserTypeAccess access = new UserTypeAccess();
+            access.setUser(superAdmin);
+            access.setType(saved);
+            userTypeAccessRepository.save(access);
+        }
+
+        return saved;
     }
 
     // =========================

@@ -9,6 +9,9 @@ type Admin = {
   id: number;
   username: string;
   fullName: string;
+  role: string;
+  email?: string;
+  phone?: string;
 };
 
 type Department = {
@@ -33,7 +36,9 @@ function AdministratorDashboard() {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
 
-  const [editingAdminId, setEditingAdminId] = useState<number | null>(null);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | "">(
+    ""
+  );
 
   const [adminForm, setAdminForm] = useState<AdminForm>({
     username: "",
@@ -48,6 +53,8 @@ function AdministratorDashboard() {
     description: "",
   });
 
+  const [editingAdminId, setEditingAdminId] = useState<number | null>(null);
+
   /* ================= LOAD DATA ================= */
 
   useEffect(() => {
@@ -58,7 +65,13 @@ function AdministratorDashboard() {
   const loadAdmins = async () => {
     try {
       const res = await api.get(`${API}/admins`);
-      setAdmins(res.data);
+
+      // ✅ only admin + super_admin
+      const filtered = res.data.filter(
+        (u: any) => u.role === "admin" || u.role === "super_admin"
+      );
+
+      setAdmins(filtered);
     } catch (err) {
       console.error("Load admins error:", err);
     }
@@ -77,9 +90,27 @@ function AdministratorDashboard() {
 
   const createAdmin = async () => {
     try {
-      await api.post(`${API}/admins`, adminForm);
+      if (!selectedDepartmentId) {
+        alert("Please select a department");
+        return;
+      }
+
+      await api.post(
+        `${API}/admins?departmentId=${selectedDepartmentId}`,
+        adminForm
+      );
+
       loadAdmins();
-      resetAdminForm();
+
+      setAdminForm({
+        username: "",
+        fullName: "",
+        passwordHash: "",
+        phone: "",
+        email: "",
+      });
+
+      setSelectedDepartmentId("");
     } catch (err) {
       console.error("Create admin error:", err);
     }
@@ -87,32 +118,28 @@ function AdministratorDashboard() {
 
   /* ================= UPDATE ADMIN ================= */
 
-  const updateAdmin = async () => {
+  const updateAdmin = async (id: number) => {
     try {
-      await api.put(`${API}/admins/${editingAdminId}`, adminForm);
+      await api.put(`${API}/admins/${id}`, adminForm);
+
+      setEditingAdminId(null);
       loadAdmins();
-      resetAdminForm();
+
+      setAdminForm({
+        username: "",
+        fullName: "",
+        passwordHash: "",
+        phone: "",
+        email: "",
+      });
     } catch (err) {
       console.error("Update admin error:", err);
     }
   };
 
-  const resetAdminForm = () => {
-    setEditingAdminId(null);
-    setAdminForm({
-      username: "",
-      fullName: "",
-      passwordHash: "",
-      phone: "",
-      email: "",
-    });
-  };
-
   /* ================= DELETE ADMIN ================= */
 
   const deleteAdmin = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this admin?")) return;
-
     try {
       await api.delete(`${API}/admins/${id}`);
       loadAdmins();
@@ -127,7 +154,11 @@ function AdministratorDashboard() {
     try {
       await api.post(`${API}/departments`, departmentForm);
       loadDepartments();
-      setDepartmentForm({ name: "", description: "" });
+
+      setDepartmentForm({
+        name: "",
+        description: "",
+      });
     } catch (err) {
       console.error("Add department error:", err);
     }
@@ -136,8 +167,6 @@ function AdministratorDashboard() {
   /* ================= DELETE DEPARTMENT ================= */
 
   const deleteDepartment = async (id: number) => {
-    if (!window.confirm("Delete this department?")) return;
-
     try {
       await api.delete(`${API}/departments/${id}`);
       loadDepartments();
@@ -146,13 +175,27 @@ function AdministratorDashboard() {
     }
   };
 
+  /* ================= EDIT ADMIN ================= */
+
+  const startEdit = (admin: Admin) => {
+    setEditingAdminId(admin.id);
+
+    setAdminForm({
+      username: admin.username,
+      fullName: admin.fullName,
+      passwordHash: "",
+      phone: admin.phone || "",
+      email: admin.email || "",
+    });
+  };
+
   return (
     <div style={{ padding: "30px" }}>
       <h1>Administrator Dashboard</h1>
 
       {/* ================= ADMIN SECTION ================= */}
 
-      <h2>{editingAdminId ? "Update Admin" : "Create Focal Person"}</h2>
+      <h2>Create / Update Admin</h2>
 
       <input
         placeholder="Username"
@@ -171,7 +214,7 @@ function AdministratorDashboard() {
       />
 
       <input
-        placeholder="Password"
+        placeholder="Password (leave empty to keep same)"
         type="password"
         value={adminForm.passwordHash}
         onChange={(e) =>
@@ -191,19 +234,28 @@ function AdministratorDashboard() {
         onChange={(e) => setAdminForm({ ...adminForm, email: e.target.value })}
       />
 
-      <br />
+      {/* ✅ Department selection */}
+      <select
+        value={selectedDepartmentId}
+        onChange={(e) => setSelectedDepartmentId(Number(e.target.value))}
+      >
+        <option value="">Select Department</option>
+        {departments.map((d) => (
+          <option key={d.id} value={d.id}>
+            {d.name}
+          </option>
+        ))}
+      </select>
 
-      <button onClick={editingAdminId ? updateAdmin : createAdmin}>
-        {editingAdminId ? "Update Admin" : "Create Admin"}
-      </button>
-
-      {editingAdminId && (
-        <button onClick={resetAdminForm} style={{ marginLeft: "10px" }}>
-          Cancel
+      {editingAdminId ? (
+        <button onClick={() => updateAdmin(editingAdminId)}>
+          Update Admin
         </button>
+      ) : (
+        <button onClick={createAdmin}>Create Admin</button>
       )}
 
-      <h3>Focal Person Accounts</h3>
+      <h3>Admin Accounts</h3>
 
       <table border={1} cellPadding={10}>
         <thead>
@@ -211,7 +263,8 @@ function AdministratorDashboard() {
             <th>ID</th>
             <th>Username</th>
             <th>Full Name</th>
-            <th>Actions</th>
+            <th>Role</th>
+            <th>Action</th>
           </tr>
         </thead>
 
@@ -221,28 +274,10 @@ function AdministratorDashboard() {
               <td>{admin.id}</td>
               <td>{admin.username}</td>
               <td>{admin.fullName}</td>
+              <td>{admin.role}</td>
               <td>
-                <button
-                  onClick={() => {
-                    setEditingAdminId(admin.id);
-                    setAdminForm({
-                      username: admin.username,
-                      fullName: admin.fullName,
-                      passwordHash: "",
-                      phone: "",
-                      email: "",
-                    });
-                  }}
-                >
-                  Edit
-                </button>
-
-                <button
-                  onClick={() => deleteAdmin(admin.id)}
-                  style={{ marginLeft: "10px" }}
-                >
-                  Delete
-                </button>
+                <button onClick={() => startEdit(admin)}>Edit</button>
+                <button onClick={() => deleteAdmin(admin.id)}>Delete</button>
               </td>
             </tr>
           ))}
