@@ -6,11 +6,9 @@ import "./EthiopianCalendarPicker.css";
 // Conversion Functions
 // ----------------------
 function ethiopicToJdn(y: number, m: number, d: number) {
-  // Ethiopian calendar epoch adjusted for correct year calculation
-  const jdn = Math.floor(
+  return Math.floor(
     1723856 + 365 + 365 * (y - 1) + Math.floor(y / 4) + 30 * (m - 1) + d - 1
   );
-  return jdn;
 }
 
 function gregorianToJdn(y: number, m: number, d: number) {
@@ -46,13 +44,11 @@ function jdnToGregorian(jdn: number) {
 }
 
 function jdnToEthiopic(jdn: number) {
-  // Adjusted epoch to fix year offset
   const r = jdn - (1723856 + 365);
   const n = Math.floor(r / 1461);
   const b = r % 1461;
 
   const year = 4 * n + Math.floor(b / 365.25) + 1;
-
   const dayOfYear = b - Math.floor(Math.floor(b / 365.25) * 365.25);
   const month = Math.floor(dayOfYear / 30) + 1;
   const day = (dayOfYear % 30) + 1;
@@ -66,22 +62,21 @@ interface EthiopianCalendarProps {
   language?: Language;
   selectedDate?: string;
   onSelect: (iso: string) => void;
+  minDate?: string; // ✅ used only for limiting
 }
 
-// --------------------------------------
-// UPDATED COMPONENT (Gregorian + Ethiopian)
-// --------------------------------------
 export default function EthiopianCalendarPicker({
   language = "am",
   selectedDate,
   onSelect,
+  minDate,
 }: EthiopianCalendarProps) {
   const today = new Date();
   const todayIso = `${today.getFullYear()}-${String(
     today.getMonth() + 1
   ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-  // Handle initial date
+  // ✅ FIXED: separate selectedDate and minDate logic
   let initialYear: number;
   let initialMonth: number;
 
@@ -98,21 +93,23 @@ export default function EthiopianCalendarPicker({
       initialYear = g.year;
       initialMonth = g.month;
     }
-  } else {
-    const todayJdn = gregorianToJdn(
-      today.getFullYear(),
-      today.getMonth() + 1,
-      today.getDate()
-    );
+  } else if (minDate) {
+    // ✅ ONLY used for positioning, NOT selection
+    const [sy, sm, sd] = minDate.split("-").map(Number);
+    const jdn = gregorianToJdn(sy, sm, sd);
 
     if (language === "am") {
-      const tEth = jdnToEthiopic(todayJdn);
-      initialYear = tEth.year;
-      initialMonth = tEth.month;
+      const eth = jdnToEthiopic(jdn);
+      initialYear = eth.year;
+      initialMonth = eth.month;
     } else {
-      initialYear = today.getFullYear();
-      initialMonth = today.getMonth() + 1;
+      const g = jdnToGregorian(jdn);
+      initialYear = g.year;
+      initialMonth = g.month;
     }
+  } else {
+    initialYear = today.getFullYear();
+    initialMonth = today.getMonth() + 1;
   }
 
   const [currentYear, setCurrentYear] = useState(initialYear);
@@ -159,9 +156,6 @@ export default function EthiopianCalendarPicker({
     { am: "ቅዳሜ", en: "Sat" },
   ];
 
-  // -----------------------
-  // GET DAYS IN MONTH
-  // -----------------------
   const daysInMonth =
     language === "am"
       ? currentMonth === 13
@@ -169,7 +163,6 @@ export default function EthiopianCalendarPicker({
         : 30
       : new Date(currentYear, currentMonth, 0).getDate();
 
-  // Get first weekday (0 = Sunday)
   let firstWeekday = 0;
 
   if (language === "am") {
@@ -179,11 +172,9 @@ export default function EthiopianCalendarPicker({
     firstWeekday = new Date(currentYear, currentMonth - 1, 1).getDay();
   }
 
-  const cells = [];
+  const cells: any[] = [];
 
-  for (let i = 0; i < firstWeekday; i++) {
-    cells.push(null);
-  }
+  for (let i = 0; i < firstWeekday; i++) cells.push(null);
 
   for (let day = 1; day <= daysInMonth; day++) {
     let gregIso = "";
@@ -201,11 +192,14 @@ export default function EthiopianCalendarPicker({
       )}-${String(day).padStart(2, "0")}`;
     }
 
+    const isDisabled =
+      gregIso > todayIso || (minDate ? gregIso < minDate : false);
     cells.push({
       etDate: day,
       gregIso,
       isToday: gregIso === todayIso,
       isSelected: gregIso === selectedDate,
+      isDisabled,
     });
   }
 
@@ -227,7 +221,6 @@ export default function EthiopianCalendarPicker({
 
   return (
     <div className="calendar">
-      {/* Header */}
       <div className="calendar-header">
         <button onClick={goPrev} className="calendar-button">
           <ChevronLeft />
@@ -247,16 +240,14 @@ export default function EthiopianCalendarPicker({
         </button>
       </div>
 
-      {/* Day Names */}
       <div className="day-names">
         {DAYS.map((d, idx) => (
           <div key={idx} className="day-name">
-            <div>{language === "am" ? d.am : d.en}</div>
+            {language === "am" ? d.am : d.en}
           </div>
         ))}
       </div>
 
-      {/* Calendar Grid */}
       <div className="calendar-grid">
         {cells.map((c, i) =>
           !c ? (
@@ -264,10 +255,15 @@ export default function EthiopianCalendarPicker({
           ) : (
             <button
               key={i}
-              onClick={() => onSelect(c.gregIso)}
-              className={`calendar-cell ${c.isToday ? "today" : ""} ${
-                c.isSelected ? "selected" : ""
-              }`}
+              disabled={c.isDisabled}
+              onClick={() => {
+                if (!c.isDisabled) onSelect(c.gregIso);
+              }}
+              className={`calendar-cell
+                ${c.isToday ? "today" : ""}
+                ${c.isSelected ? "selected" : ""}
+                ${c.isDisabled ? "disabled" : ""}
+              `}
             >
               {language === "am" ? c.etDate : Number(c.gregIso.split("-")[2])}
             </button>

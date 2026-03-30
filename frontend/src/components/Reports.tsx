@@ -196,7 +196,17 @@ export default function Reports({
   // date filters — ISO Gregorian strings returned by EthiopianCalendarPicker
   const [startDateIso, setStartDateIso] = useState<string>("");
   const [endDateIso, setEndDateIso] = useState<string>("");
-
+  useEffect(() => {
+    setEndDateIso(""); // reset "To" when "From" changes
+  }, [startDateIso]);
+  const today = new Date();
+  const todayIso = `${today.getFullYear()}-${String(
+    today.getMonth() + 1
+  ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const formatDate = (iso?: string) => {
+    if (!iso) return "";
+    return new Date(iso).toLocaleDateString();
+  };
   // calendar popups
   const [showStartCalendar, setShowStartCalendar] = useState(false);
   const [showEndCalendar, setShowEndCalendar] = useState(false);
@@ -364,43 +374,55 @@ export default function Reports({
   const handleExportPDF = async () => {
     const el = document.getElementById("report-area");
     if (!el) return toast.error("Report area not found");
+
     try {
+      // ✅ FORCE SAFE COLORS (NO OKLCH)
+      const originalStyles = document.documentElement.style.cssText;
+
+      document.documentElement.style.setProperty("--background", "#ffffff");
+      document.documentElement.style.setProperty("--foreground", "#000000");
+      document.documentElement.style.setProperty("--card", "#ffffff");
+      document.documentElement.style.setProperty(
+        "--card-foreground",
+        "#000000"
+      );
+      document.documentElement.style.setProperty("--border", "#e5e7eb");
+      document.documentElement.style.setProperty("--muted", "#f3f4f6");
+      document.documentElement.style.setProperty(
+        "--muted-foreground",
+        "#6b7280"
+      );
+
       const prevW = el.style.width;
-      const prevBg = el.style.background;
       el.style.width = "1200px";
-      el.style.background = "#ffffff";
-      await new Promise((r) => setTimeout(r, 80));
-      const canvas = await html2canvas(el as HTMLElement, {
+
+      await new Promise((r) => setTimeout(r, 100));
+
+      const canvas = await html2canvas(el, {
         scale: 2,
         useCORS: true,
-        backgroundColor: "#fff",
+        backgroundColor: "#ffffff",
       });
+
+      // restore styles
+      document.documentElement.style.cssText = originalStyles;
       el.style.width = prevW;
-      el.style.background = prevBg;
+
       const img = canvas.toDataURL("image/png");
+
       const pdf = new jsPDF("p", "mm", "a4");
       const w = pdf.internal.pageSize.getWidth();
       const h = (canvas.height * w) / canvas.width;
-      if (h <= pdf.internal.pageSize.getHeight()) {
-        pdf.addImage(img, "PNG", 0, 0, w, h);
-      } else {
-        let position = 0;
-        let remaining = h;
-        while (remaining > 0) {
-          pdf.addImage(img, "PNG", 0, -position, w, h);
-          remaining -= pdf.internal.pageSize.getHeight();
-          position += pdf.internal.pageSize.getHeight();
-          if (remaining > 0) pdf.addPage();
-        }
-      }
+
+      pdf.addImage(img, "PNG", 0, 0, w, h);
       pdf.save(`reports_${new Date().toISOString().slice(0, 10)}.pdf`);
-      toast.success(language === "am" ? "PDF ተፈጠረ" : "PDF exported");
+
+      toast.success("PDF exported");
     } catch (err) {
-      console.error(err);
-      toast.error(language === "am" ? "PDF መፍጠር አልተሳካም" : "Export failed");
+      console.error("PDF ERROR:", err);
+      toast.error("Export failed");
     }
   };
-
   const handleExportExcel = () => {
     try {
       const summarySheet = XLSX.utils.json_to_sheet(
@@ -587,7 +609,7 @@ export default function Reports({
                   <div className="relative">
                     <Button
                       variant="outline"
-                      className="w-full text-left justify-between h-11 bg-white hover:bg-gray-50 border-gray-300 shadow-sm"
+                      className="w-[220px] text-left justify-between h-11"
                       onClick={() => {
                         setShowStartCalendar((s) => !s);
                         setShowEndCalendar(false);
@@ -599,7 +621,7 @@ export default function Reports({
                         }
                       >
                         {startDateIso
-                          ? formatEthiopicDate(startDateIso)
+                          ? formatDate(startDateIso)
                           : labels.selectDate[language]}
                       </span>
                       <CalendarIcon className="w-4 h-4 text-gray-400" />
@@ -614,7 +636,8 @@ export default function Reports({
                         />
 
                         {/* Calendar Popup */}
-                        <div className="absolute z-50 mt-2 left-0 shadow-2xl rounded-lg border border-gray-200 bg-white">
+                        <div className="absolute z-50 mt-2 left-0 w-[260px] shadow-xl rounded-lg border bg-white">
+                          {" "}
                           <EthiopianCalendarPicker
                             language={language}
                             selectedDate={startDateIso}
@@ -622,7 +645,6 @@ export default function Reports({
                               setStartDateIso((iso || "").toString().trim());
                               setShowStartCalendar(false);
                             }}
-                            onClose={() => setShowStartCalendar(false)}
                           />
                         </div>
                       </>
@@ -644,7 +666,7 @@ export default function Reports({
                   <div className="relative">
                     <Button
                       variant="outline"
-                      className="w-full text-left justify-between h-11 bg-white hover:bg-gray-50 border-gray-300 shadow-sm"
+                      className="w-[220px] text-left justify-between h-11"
                       onClick={() => {
                         setShowEndCalendar((s) => !s);
                         setShowStartCalendar(false);
@@ -656,7 +678,7 @@ export default function Reports({
                         }
                       >
                         {endDateIso
-                          ? formatEthiopicDate(endDateIso)
+                          ? formatDate(endDateIso)
                           : labels.selectDate[language]}
                       </span>
                       <CalendarIcon className="w-4 h-4 text-gray-400" />
@@ -675,11 +697,11 @@ export default function Reports({
                           <EthiopianCalendarPicker
                             language={language}
                             selectedDate={endDateIso}
+                            minDate={startDateIso} // ✅ ONLY HERE
                             onSelect={(iso) => {
                               setEndDateIso((iso || "").toString().trim());
                               setShowEndCalendar(false);
                             }}
-                            onClose={() => setShowEndCalendar(false)}
                           />
                         </div>
                       </>

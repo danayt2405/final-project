@@ -86,7 +86,7 @@ export function HomePage({
         >
           {language === "am"
             ? "እንኳን ወደ የፍትህ ጥያቄ ስርዓት በደህና መጡ"
-            : "Welcome to the INSA Complaint Dashboard"}
+            : "Welcome to the EDU Complaint Dashboard"}
         </motion.h1>
 
         <motion.p
@@ -96,8 +96,8 @@ export function HomePage({
           className="mb-12 text-slate-600 dark:text-slate-300 text-lg"
         >
           {language === "am"
-            ? "የመረጃ አውታረ መረብ ደህንነት አስተዳደር የቅሬታ አስተዳደር ስርዓት"
-            : "Information Network Security Administration Complaint Management System"}
+            ? "የኢትዮጲያ መከላከያ ዩኒቨርሲቲ የቅሬታ አስተዳደር ስርዓት"
+            : "Ethiopian Defence University Complaint Management System"}
         </motion.p>
 
         {/* Dashboard Selection Buttons */}

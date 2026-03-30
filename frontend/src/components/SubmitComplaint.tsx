@@ -46,7 +46,7 @@ const translations = {
     planned: "Planned",
     executed: "Executed",
     fullNameRequired: "Full Name",
-    jobTitle: "Job Title",
+    jobTitle: "fill role,student/staff or other.. ",
     workDepartment: "Work Department",
     responsibleEntity: "Responsible Entity",
     additionalDetails: "Additional Details",
@@ -68,7 +68,7 @@ const translations = {
     failedToSubmit: "Failed to submit",
     failedToLoadTypes: "Failed to load complaint types",
     position: "Position",
-    department: "Department",
+    department: "fill your role,student/staff or other..",
     fileRestrictions:
       "Accepted: PDF, PNG, JPG, MP4/WebM videos (Max 50MB each)",
     successMessage:
@@ -97,7 +97,7 @@ const translations = {
     planned: "የታቀደ",
     executed: "የተፈፀመ",
     fullNameRequired: "የተጠያቂ አካል ሙሉ ስም",
-    jobTitle: "የተጠያቂ አካል የስራ መደብ",
+    jobTitle: "የተጠያቂ አካል የስራ መደብ,ተማሪ/ሰራተኛ..",
     workDepartment: "የተጠያቂ አካልየስራ ክፍል",
     responsibleEntity: "የተጠያቂ አካል ዝርዝር መረጃ",
     additionalDetails: "ተጨማሪ ዝርዝሮች",
@@ -119,7 +119,7 @@ const translations = {
     failedToSubmit: "ማስገባት አልተሳካም",
     failedToLoadTypes: "የቅሬታ አይነቶችን መጫን አልተሳካም",
     position: "የስራ መደብ",
-    department: "ክፍል",
+    department: "የጠያቂ አካል የስራ መደብ,ተማሪ/ሰራተኛ..",
     fileRestrictions:
       "ተቀብለው የፋይሎች: PDF, PNG, JPG, MP4/WebM የቪዲዮ ፋይሎች (እስከ 50MB የአንድ ፋይል)",
     successMessage: "ቅሬታዎ በተሳካ ሁኔታ ገብቷል። እባክዎ ይህን የክትትል ቁጥር ለወደፊት ማጣቀሻ ያስቀምጡ።",
@@ -459,7 +459,13 @@ export function SubmitComplaint({ language }: { language: Language }) {
         document.getElementById("incidentLocation") as HTMLInputElement
       )?.value,
       dateOccurred: incidentDate
-        ? incidentDate.toISOString().slice(0, 10)
+        ? new Date(
+            incidentDate.getFullYear(),
+            incidentDate.getMonth(),
+            incidentDate.getDate()
+          )
+            .toISOString()
+            .slice(0, 10)
         : null,
       complainant: {
         fullName: (document.getElementById("fullName2") as HTMLInputElement)
@@ -779,7 +785,16 @@ export function SubmitComplaint({ language }: { language: Language }) {
                       {language === "am" ? (
                         <EthiopianCalendar
                           selected={incidentDate}
-                          onSelect={(d: Date | undefined) => setIncidentDate(d)}
+                          onSelect={(d: Date | undefined) => {
+                            if (!d) return;
+                            setIncidentDate(
+                              new Date(
+                                d.getFullYear(),
+                                d.getMonth(),
+                                d.getDate()
+                              )
+                            );
+                          }}
                         />
                       ) : (
                         <Calendar

@@ -20,13 +20,19 @@ export function EthiopianCalendar({
   selected,
   onSelect,
 }: EthiopianCalendarProps) {
-  // Today EC
-  const todayEth = gregorianToEthiopian(new Date());
+  // ✅ FIX: normalize ALL dates to remove timezone shift
+  const normalize = (d: Date) =>
+    new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
-  // Selected EC
-  const selectedEth = selected ? gregorianToEthiopian(selected) : null;
+  // Today EC (FIXED)
+  const todayEth = gregorianToEthiopian(normalize(new Date()));
 
-  // Initial view: selected month or today's month
+  // Selected EC (FIXED)
+  const selectedEth = selected
+    ? gregorianToEthiopian(normalize(selected))
+    : null;
+
+  // Initial view
   const initialView: EthiopianDate = selectedEth
     ? { ...selectedEth }
     : { ...todayEth };
@@ -35,7 +41,9 @@ export function EthiopianCalendar({
 
   useEffect(() => {
     if (selected) {
-      const newSelected = gregorianToEthiopian(selected);
+      // ✅ FIX HERE
+      const newSelected = gregorianToEthiopian(normalize(selected));
+
       if (
         newSelected.year !== viewDate.year ||
         newSelected.month !== viewDate.month
@@ -50,12 +58,15 @@ export function EthiopianCalendar({
   const daysInMonth = getDaysInEthiopianMonth(viewDate.month, viewDate.year);
 
   // Compute weekday offset for the 1st day
-  const firstDayGreg = ethiopianToGregorian({
+  const firstRaw = ethiopianToGregorian({
     year: viewDate.year,
     month: viewDate.month,
     day: 1,
   });
-  const startOffset = firstDayGreg.getDay(); // 0=Sun, 6=Sat
+
+  // ✅ FIX: normalize again
+  const firstDayGreg = normalize(firstRaw);
+  const startOffset = firstDayGreg.getDay();
 
   const isSelected = (day: number) => {
     if (!selectedEth) return false;
@@ -75,14 +86,11 @@ export function EthiopianCalendar({
   };
 
   const isFuture = (day: number) => {
-    // First: if viewing a future year → block everything
     if (viewDate.year > todayEth.year) return true;
 
-    // If viewing a future month in the same year → block all days
     if (viewDate.year === todayEth.year && viewDate.month > todayEth.month)
       return true;
 
-    // If same month: block all days after today
     if (
       viewDate.year === todayEth.year &&
       viewDate.month === todayEth.month &&
@@ -98,18 +106,17 @@ export function EthiopianCalendar({
     const nextMonth = viewDate.month === 13 ? 1 : viewDate.month + 1;
     const nextYear = viewDate.month === 13 ? viewDate.year + 1 : viewDate.year;
 
-    // Convert next Ethiopian month (day 1) → Gregorian
     const g = ethiopianToGregorian({
       year: nextYear,
       month: nextMonth,
       day: 1,
     });
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    g.setHours(0, 0, 0, 0);
+    // ✅ FIX: normalize both
+    const today = normalize(new Date());
+    const check = normalize(g);
 
-    return g.getTime() > today.getTime();
+    return check.getTime() > today.getTime();
   };
 
   const handlePrev = () => {
@@ -119,7 +126,7 @@ export function EthiopianCalendar({
   };
 
   const handleNext = () => {
-    if (isNextMonthFuture()) return; // 🚫 Block moving into future
+    if (isNextMonthFuture()) return;
 
     if (viewDate.month === 13)
       setViewDate({ year: viewDate.year + 1, month: 1, day: 1 });
@@ -128,12 +135,17 @@ export function EthiopianCalendar({
 
   const handleClick = (day: number) => {
     if (isFuture(day)) return;
+
     const g = ethiopianToGregorian({
       year: viewDate.year,
       month: viewDate.month,
       day,
     });
-    onSelect?.(g);
+
+    // ✅ already correct — keep this
+    const fixed = normalize(g);
+
+    onSelect?.(fixed);
   };
 
   return (
