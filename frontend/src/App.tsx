@@ -23,7 +23,8 @@ export default function App() {
   useEffect(() => {
     const user = getCurrentUser();
 
-    if (user) {
+    // Only redirect if user is on "/" (home page)
+    if (user && window.location.pathname === "/") {
       if (user.role === "administrator") {
         setAdminAuthenticated(true);
         navigate("/administrator");

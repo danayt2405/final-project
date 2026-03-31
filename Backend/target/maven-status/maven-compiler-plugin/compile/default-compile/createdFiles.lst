@@ -1,3 +1,4 @@
+com\insa\dto\AdminCreateRequest.class
 com\insa\config\JwtAuthenticationEntryPoint.class
 com\insa\dto\AttachmentDto.class
 com\insa\InsaApplication.class
@@ -8,6 +9,7 @@ com\insa\repository\UserRepository.class
 com\insa\repository\ComplainantRepository.class
 com\insa\controller\ComplaintController.class
 com\insa\service\ComplaintService.class
+com\insa\controller\AdministratorController.class
 com\insa\entity\Complaint$ComplaintBuilder.class
 com\insa\repository\StatusRepository.class
 com\insa\dto\ComplaintDto.class
