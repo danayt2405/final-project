@@ -30,9 +30,7 @@ export function Header({
 }: HeaderProps) {
   const title = language === "am" ? "የቅሬታ ስርዓት" : "Complaint System";
   const subtitle =
-    language === "am"
-      ? "የመረጃ አውታረ መረብ ደህንነት አስተዳደር"
-      : "Information Network Security Administration";
+    language === "am" ? "የኢትዮጲያ መከላከያ ዩኒቨርሲቲ" : "Ethiopian Defence University";
 
   const backText = language === "am" ? "ወደ መግቢያ ይመለሱ " : "Back to Home";
   const roleText =

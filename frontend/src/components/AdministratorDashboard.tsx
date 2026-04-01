@@ -25,7 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "./ui/table";
-
+import insaLogo from "../assets/logo.png";
 const API = "/administrator";
 
 type Admin = {
@@ -152,28 +152,42 @@ function AdministratorDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-sky-50 to-white">
       <div className="max-w-6xl mx-auto px-6 py-10">
         {/* HEADER */}
-        <div className="mb-10">
-          <h1 className="text-4xl font-bold">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Manage system data easily</p>
+        <div className="flex items-center gap-4 p-6">
+          {/* Logo */}
+          <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-md p-3">
+            <img
+              src={insaLogo}
+              alt="INSA Logo"
+              className="w-full h-full object-contain"
+            />
+          </div>
+
+          {/* Header text */}
+          <div>
+            <h1 className="text-4xl font-bold">
+              System Administrator Dashboard
+            </h1>
+            <p className="text-muted-foreground">Manage system data easily</p>
+          </div>
         </div>
 
         {/* STATS */}
         <div className="grid md:grid-cols-3 gap-4 mb-8">
-          <Card className={`bg-sky-100 ${statCard}`}>
+          <Card className={`bg-blue-100 ${statCard}`}>
             <CardContent className="p-6">
               <p>Total Admins</p>
               <h2 className="text-2xl font-bold">{admins.length}</h2>
             </CardContent>
           </Card>
 
-          <Card className={`bg-purple-100 ${statCard}`}>
+          <Card className={`bg-blue-100 ${statCard}`}>
             <CardContent className="p-6">
               <p>Departments</p>
               <h2 className="text-2xl font-bold">{departments.length}</h2>
             </CardContent>
           </Card>
 
-          <Card className={`bg-green-100 ${statCard}`}>
+          <Card className={`bg-blue-100 ${statCard}`}>
             <CardContent className="p-6">
               <p>Super Admins</p>
               <h2 className="text-2xl font-bold">
@@ -208,7 +222,10 @@ function AdministratorDashboard() {
                 })
               }
             />
-            <Button onClick={addDepartment}>Add</Button>
+
+            <Button variant="secondary" onClick={addDepartment}>
+              Add
+            </Button>
           </CardContent>
         </Card>
 
@@ -319,7 +336,9 @@ function AdministratorDashboard() {
                   Update
                 </Button>
               ) : (
-                <Button onClick={createAdmin}>Create</Button>
+                <Button variant="secondary" onClick={createAdmin}>
+                  Create
+                </Button>
               )}
             </div>
           </CardContent>
@@ -354,7 +373,11 @@ function AdministratorDashboard() {
                       <Badge>{admin.role}</Badge>
                     </TableCell>
                     <TableCell className="flex gap-2">
-                      <Button size="sm" onClick={() => startEdit(admin)}>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => startEdit(admin)}
+                      >
                         Edit
                       </Button>
                       <Button

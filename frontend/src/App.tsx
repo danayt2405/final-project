@@ -16,24 +16,7 @@ export default function App() {
 
   const [theme, setTheme] = useState<Theme>("light");
   const [language, setLanguage] = useState<Language>("en");
-
   const [adminAuthenticated, setAdminAuthenticated] = useState(false);
-
-  // ================= INIT =================
-  useEffect(() => {
-    const user = getCurrentUser();
-
-    // Only redirect if user is on "/" (home page)
-    if (user && window.location.pathname === "/") {
-      if (user.role === "administrator") {
-        setAdminAuthenticated(true);
-        navigate("/administrator");
-      } else if (user.role === "admin" || user.role === "superadmin") {
-        setAdminAuthenticated(true);
-        navigate("/admin");
-      }
-    }
-  }, []);
 
   // ================= THEME =================
   useEffect(() => {
@@ -56,8 +39,6 @@ export default function App() {
   // ================= LOGIN SUCCESS =================
   const handleAdminLogin = (user?: any) => {
     const currentUser = user || getCurrentUser();
-
-    console.log("LOGIN USER:", currentUser);
 
     if (!currentUser) {
       alert("Login error");
@@ -98,7 +79,7 @@ export default function App() {
           }
         />
 
-        {/* USER */}
+        {/* USER DASHBOARD */}
         <Route
           path="/user"
           element={
@@ -112,7 +93,7 @@ export default function App() {
           }
         />
 
-        {/* ADMIN (focal person + super admin) */}
+        {/* ADMIN DASHBOARD */}
         <Route
           path="/admin"
           element={
@@ -128,7 +109,7 @@ export default function App() {
           }
         />
 
-        {/* ADMINISTRATOR */}
+        {/* ADMINISTRATOR DASHBOARD */}
         <Route
           path="/administrator"
           element={
